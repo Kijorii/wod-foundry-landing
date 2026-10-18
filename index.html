@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="pl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World of Darkness (Wampir & Łowca) - Foundry VTT Landing Page</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cinzel, Cormorant Garamond, Oswald, Share Tech Mono, Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Oswald:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- html2canvas do bezpośredniego eksportu sceny 1920x1080 PNG pod The Forge -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* ==========================================================================
+           ZMIENNE SYSTEMOWE: WAMPIR: MASKARADA (V5) VS ŁOWCA: PORACHUNKI (H5)
+           ========================================================================== */
+        :root, body[data-system="vampire"] {
+            --bg-obsidian: #070609;
+            --panel-bg: rgba(14, 11, 16, 0.88);
+            --panel-bg-alt: rgba(22, 10, 14, 0.90);
+            --accent-primary: #9e0b16;      /* Głęboki karmazyn V5 */
+            --accent-bright: #e6192e;       /* Świecąca krew */
+            --accent-secondary: #c9a96e;    /* Antyczne złoto Camarilli */
+            --accent-secondary-dim: rgba(201, 169, 110, 0.32);
+            --text-main: #f3efeA;
+            --text-muted: #a39c93;
+            --font-display: 'Cinzel', serif;
+            --font-lore: 'Cormorant Garamond', serif;
+            --font-mono: 'Inter', sans-serif;
+            --title-glow: 0 2px 5px rgba(0,0,0,0.95), 0 0 26px rgba(185, 16, 32, 0.55), 0 0 55px rgba(122, 9, 22, 0.35);
+            --tint-gradient: linear-gradient(180deg, rgba(90, 6, 16, 0.25) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.45) 80%, rgba(75, 4, 14, 0.35) 100%);
+        }
+
+        body[data-system="hunter"] {
+            --bg-obsidian: #080a0c;
+            --panel-bg: rgba(13, 16, 20, 0.90);
+            --panel-bg-alt: rgba(22, 16, 12, 0.92);
+            --accent-primary: #d95318;      /* Wypalony pomarańcz H5 (Hunter Reckoning) */
+            --accent-bright: #ff6b1a;       /* Żar / Ostrzeżenie */
+            --accent-secondary: #e5a93c;    /* Sodowa latarnia / Bursztyn */
+            --accent-secondary-dim: rgba(229, 169, 60, 0.32);
+            --text-main: #f2f0ec;
+            --text-muted: #9ca3af;
+            --font-display: 'Oswald', sans-serif;
+            --font-lore: 'Inter', sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
+            --title-glow: 0 2px 5px rgba(0,0,0,0.95), 0 0 24px rgba(255, 107, 26, 0.50), 0 0 50px rgba(217, 83, 24, 0.30);
+            --tint-gradient: linear-gradient(180deg, rgba(120, 45, 8, 0.22) 0%, rgba(10, 14, 18, 0.1) 40%, rgba(8, 10, 14, 0.5) 80%, rgba(95, 38, 6, 0.32) 100%);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-obsidian);
+            color: var(--text-main);
+            user-select: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .font-display-sys { font-family: var(--font-display); }
+        .font-lore-sys { font-family: var(--font-lore); }
+        .font-mono-sys { font-family: var(--font-mono); }
+
+        /* Warstwa tła i winiety */
+        #bg-layer {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.6s ease-in-out, filter 0.4s ease;
+        }
+
+        .vignette-overlay {
+            background: radial-gradient(circle at 40% 50%, rgba(10, 9, 12, 0.18) 0%, rgba(8, 7, 10, 0.72) 65%, rgba(4, 3, 5, 0.96) 100%);
+            box-shadow: inset 0 0 130px rgba(0, 0, 0, 0.95);
+        }
+
+        .system-tint-overlay {
+            background: var(--tint-gradient);
+            mix-blend-mode: multiply;
+            transition: background 0.5s ease;
+        }
+
+        /* Panele interfejsu dopasowane do systemu */
+        .wod-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-secondary-dim);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.88), inset 0 0 24px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            transition: border-color 0.4s ease, background 0.4s ease;
+        }
+
+        .wod-panel-accent {
+            background: var(--panel-bg-alt);
+            border: 1px solid var(--accent-primary);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9), inset 0 0 28px rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px);
+            transition: border-color 0.4s ease, background 0.4s ease;
+        }
+
+        /* Obramowanie gniazda na token gracza */
+        .token-ring {
+            position: relative;
+            border-radius: 9999px;
+            background: radial-gradient(circle, rgba(18, 16, 22, 0.78) 0%, rgba(7, 6, 9, 0.95) 75%, rgba(15, 11, 14, 0.99) 100%);
+            box-shadow: 
+                0 0 0 2px #141115,
+                0 0 0 3.5px var(--accent-secondary),
+                0 0 18px rgba(0, 0, 0, 0.95),
+                inset 0 0 16px rgba(0, 0, 0, 0.95);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .token-ring::before {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 9999px;
+            border: 1px dashed var(--accent-secondary-dim);
+            pointer-events: none;
+            transition: transform 8s linear, border-color 0.3s ease;
+        }
+
+        .token-slot:hover .token-ring {
+            box-shadow: 
+                0 0 0 2px #1f0d0d,
+                0 0 0 4px var(--accent-bright),
+                0 0 24px var(--accent-primary),
+                inset 0 0 18px rgba(0, 0, 0, 0.9);
+            transform: scale(1.03);
+        }
+
+        /* Siatka celownika w pustym gnieździe pod Foundry VTT */
+        .foundry-socket-grid {
+            background-image: 
+                radial-gradient(var(--accent-secondary-dim) 1px, transparent 1px),
+                radial-gradient(circle, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
+            background-size: 10px 10px, 100% 100%;
+            background-position: center;
+        }
+
+        /* Poświata głównego tytułu kampanii */
+        .campaign-title-glow {
+            text-shadow: var(--title-glow);
+        }
+
+        [contenteditable="true"]:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            box-shadow: 0 0 0 1px var(--accent-secondary);
+        }
+
+        /* Paski przewijania */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(10, 9, 12, 0.6); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-secondary-dim); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-bright); }
+
+        /* Tryb Czysty pod Foundry VTT (ukrywa przyciski sterujące) */
+        body.clean-mode .ui-control {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        body.clean-mode #exit-clean-mode-btn {
+            opacity: 0.25;
+            pointer-events: auto;
+        }
+        body.clean-mode #exit-clean-mode-btn:hover {
+            opacity: 1;
+        }
+
+        /* Kolory dynamiczne przypisywane z CSS vars */
+        .text-sys-accent { color: var(--accent-bright); }
+        .text-sys-secondary { color: var(--accent-secondary); }
+        .border-sys-secondary { border-color: var(--accent-secondary-dim); }
+        .bg-sys-primary { background-color: var(--accent-primary); }
+    </style>
+</head>
+<body data-system="vampire" class="relative w-screen h-screen overflow-hidden select-none">
+
+    <!-- GŁÓWNY KONTENER SCENY (Przechwytywany także przy eksporcie do PNG 1920x1080) -->
+    <div id="capture-stage" class="relative w-full h-full overflow-hidden flex flex-col justify-between">
+
+        <!-- 1. WARSTWA TŁA -->
+        <div id="bg-layer" class="absolute inset-0 z-0"></div>
+        <div class="system-tint-overlay absolute inset-0 z-1 pointer-events-none"></div>
+        <div class="vignette-overlay absolute inset-0 z-2 pointer-events-none"></div>
+
+        <!-- 2. WARSTWA ATMOSFERYCZNA CANVAS (Krwawy popiół / Sodowa mgła / Deszcz) -->
+        <canvas id="atmosphere-canvas" class="absolute inset-0 z-10 pointer-events-none w-full h-full"></canvas>
+
+        <!-- 3. DEKORACYJNA RAMKA EKRANU (Dopasowuje styl do Wampira lub Łowcy) -->
+        <div class="absolute inset-3 border border-sys-secondary pointer-events-none z-20 rounded-sm">
+            <!-- Lewy Górny Narożnik -->
+            <svg class="absolute -top-1 -left-1 w-8 h-8 text-sys-secondary opacity-75" viewBox="0 0 32 32" fill="none">
+                <path d="M1 31V4C1 2.34315 2.34315 1 4 1H31" stroke="currentColor" stroke-width="2"/>
+                <path d="M6 23V6H23" stroke="var(--accent-bright)" stroke-width="1"/>
+                <rect x="4" y="4" width="3" height="3" fill="currentColor"/>
+            </svg>
+            <!-- Prawy Górny Narożnik -->
+            <svg class="absolute -top-1 -right-1 w-8 h-8 text-sys-secondary opacity-75 rotate-90" viewBox="0 0 32 32" fill="none">
+                <path d="M1 31V4C1 2.34315 2.34315 1 4 1H31" stroke="currentColor" stroke-width="2"/>
+                <path d="M6 23V6H23" stroke="var(--accent-bright)" stroke-width="1"/>
+                <rect x="4" y="4" width="3" height="3" fill="currentColor"/>
+            </svg>
+            <!-- Lewy Dolny Narożnik -->
+            <svg class="absolute -bottom-1 -left-1 w-8 h-8 text-sys-secondary opacity-75 -rotate-90" viewBox="0 0 32 32" fill="none">
+                <path d="M1 31V4C1 2.34315 2.34315 1 4 1H31" stroke="currentColor" stroke-width="2"/>
+                <path d="M6 23V6H23" stroke="var(--accent-bright)" stroke-width="1"/>
+                <rect x="4" y="4" width="3" height="3" fill="currentColor"/>
+            </svg>
+            <!-- Prawy Dolny Narożnik -->
+            <svg class="absolute -bottom-1 -right-1 w-8 h-8 text-sys-secondary opacity-75 rotate-180" viewBox="0 0 32 32" fill="none">
+                <path d="M1 31V4C1 2.34315 2.34315 1 4 1H31" stroke="currentColor" stroke-width="2"/>
+                <path d="M6 23V6H23" stroke="var(--accent-bright)" stroke-width="1"/>
+                <rect x="4" y="4" width="3" height="3" fill="currentColor"/>
+            </svg>
+        </div>
+
+        <!-- 4. GŁÓWNY UKŁAD INTERFEJSU -->
+        <div class="relative z-30 w-full h-full flex flex-col justify-between p-6 md:p-8 pr-5 md:pr-7">
+
+            <!-- GÓRNA SEKCJA: Zegar/Lokalizacja + Nazwa Kampanii + Szybki Przełącznik Systemu -->
+            <header class="w-full flex justify-between items-start gap-4 pointer-events-auto">
+                
+                <!-- LEWY GÓRNY RÓG: Lokalizacja / Domena / Czas Nocy -->
+                <div id="widget-clock" class="wod-panel px-4 py-3 rounded-md w-72 shrink-0 transition-all duration-300">
+                    <div class="flex items-center gap-3">
+                        <div id="system-corner-icon" class="w-10 h-10 rounded-full bg-black/60 border border-sys-secondary flex items-center justify-center text-sys-accent shrink-0 shadow-inner">
+                            <!-- Ikona zależna od systemu (Księżyc/Ankh lub Celownik Łowcy) -->
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div id="editable-location" contenteditable="true" spellcheck="false" 
+                                 oninput="saveCurrentSystemField('location', this.innerHTML)"
+                                 class="font-display-sys text-xs uppercase tracking-widest text-sys-secondary font-bold px-1 truncate"
+                                 title="Kliknij, aby edytować miasto, domenę lub strefę operacyjną">
+                            </div>
+                            <div id="editable-date" contenteditable="true" spellcheck="false" 
+                                 oninput="saveCurrentSystemField('date', this.innerHTML)"
+                                 class="font-lore-sys italic text-sm text-stone-300 px-1 truncate mt-0.5"
+                                 title="Kliknij, aby zmienić datę lub godzinę w kronice">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ŚRODEK GÓRA: Miejsce na wpisanie Nazwy Kampanii -->
+                <div class="flex-1 flex flex-col items-center justify-center px-2 -mt-1 relative">
+                    <!-- Znak wodny systemu w tle nagłówka (Ankh dla Wampira / Glif Łowcy dla H5) -->
+                    <div id="header-watermark" class="absolute -top-3 opacity-15 pointer-events-none text-sys-accent"></div>
+
+                    <div class="relative group text-center max-w-3xl w-full">
+                        <!-- Górna linia z nazwą systemu -->
+                        <div class="flex items-center justify-center gap-3 mb-1">
+                            <div class="h-[1px] w-12 md:w-24 bg-gradient-to-r from-transparent via-[var(--accent-secondary)] to-[var(--accent-bright)]"></div>
+                            <span id="editable-system-label" contenteditable="true" spellcheck="false"
+                                  oninput="saveCurrentSystemField('systemLabel', this.innerHTML)"
+                                  class="font-display-sys text-[11px] tracking-[0.3em] text-sys-secondary uppercase px-2 font-semibold">
+                            </span>
+                            <div class="h-[1px] w-12 md:w-24 bg-gradient-to-l from-transparent via-[var(--accent-secondary)] to-[var(--accent-bright)]"></div>
+                        </div>
+
+                        <!-- Główny Tytuł Kampanii -->
+                        <h1 id="editable-campaign-title" contenteditable="true" spellcheck="false"
+                            oninput="saveCurrentSystemField('campaignTitle', this.innerHTML)"
+                            class="font-display-sys font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wider text-stone-100 campaign-title-glow uppercase py-1 px-3 transition-all"
+                            title="Kliknij, aby wpisać własną nazwę kampanii">
+                        </h1>
+
+                        <!-- Podtytuł / Rozdział / Operacja -->
+                        <div class="flex items-center justify-center mt-0.5">
+                            <p id="editable-campaign-subtitle" contenteditable="true" spellcheck="false"
+                               oninput="saveCurrentSystemField('campaignSubtitle', this.innerHTML)"
+                               class="font-lore-sys italic text-lg md:text-2xl text-sys-secondary tracking-wide px-4 py-0.5"
+                               title="Kliknij, aby zmienić aktualny rozdział, akt lub kryptonim polowania">
+                            </p>
+                        </div>
+
+                        <!-- Dolny ornament pod tytułem -->
+                        <div id="header-divider" class="flex justify-center mt-1"></div>
+
+                        <!-- Dymek informacyjny (znika przy eksporcie) -->
+                        <span class="ui-control opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-stone-400 tracking-wider uppercase pointer-events-none whitespace-nowrap">
+                            <i class="fa-solid fa-pen-nib mr-1 text-sys-secondary"></i> Kliknij dowolny napis, aby edytować
+                        </span>
+                    </div>
+                </div>
+
+                <!-- PRAWY GÓRNY RÓG: Szybki przełącznik systemu (Wampir / Łowca) + Wyjście z trybu czystego -->
+                <div class="w-80 md:w-[350px] flex justify-end items-center gap-2 shrink-0">
+                    <!-- Szybki przełącznik trybu widoczny w trybie edycji -->
+                    <div class="ui-control wod-panel p-1 rounded-md flex items-center gap-1 border border-sys-secondary">
+                        <button id="top-btn-vampire" onclick="switchSystem('vampire')"
+                                class="px-3 py-1.5 rounded text-xs font-display-sys tracking-wider uppercase transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-droplet"></i> Wampir: Maskarada
+                        </button>
+                        <button id="top-btn-hunter" onclick="switchSystem('hunter')"
+                                class="px-3 py-1.5 rounded text-xs font-display-sys tracking-wider uppercase transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-crosshairs"></i> Łowca: Porachunki
+                        </button>
+                    </div>
+
+                    <button id="exit-clean-mode-btn" onclick="toggleCleanMode()" 
+                            class="hidden px-3 py-1.5 rounded bg-black/85 border border-sys-secondary text-xs font-display-sys text-sys-secondary hover:bg-sys-primary hover:text-white transition-all z-50">
+                        <i class="fa-solid fa-eye mr-1"></i> Pokaż interfejs (H)
+                    </button>
+                </div>
+            </header>
+
+            <!-- ŚRODKOWA I DOLNA SEKCJA -->
+            <div class="flex-1 flex items-end justify-between gap-6 mt-4 overflow-hidden pointer-events-none">
+
+                <!-- LEWA DOLNA KOLUMNA: Licznik Systemowy (Maskarada vs Zagrożenie/Desperacja) + Notatki + Narzędzia -->
+                <div class="flex flex-col gap-3.5 max-w-md w-full pointer-events-auto pb-0.5">
+                    
+                    <!-- Widżet 1: Licznik Zagrożenia Maskarady (V5) / Poziom Zagrożenia i Desperacji (H5) -->
+                    <div id="widget-tracker" class="wod-panel-accent p-4 rounded-md transition-all duration-300">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span id="tracker-icon" class="text-sys-accent text-sm"></span>
+                                <span id="editable-tracker-title" contenteditable="true" spellcheck="false"
+                                      oninput="saveCurrentSystemField('trackerTitle', this.innerHTML)"
+                                      class="font-display-sys text-xs font-bold tracking-widest uppercase text-stone-100 px-1">
+                                </span>
+                            </div>
+                            <span id="tracker-status-label" class="font-lore-sys italic text-sm text-sys-secondary font-semibold">
+                            </span>
+                        </div>
+
+                        <!-- 5 interaktywnych segmentów -->
+                        <div class="flex items-center justify-between gap-2 my-2" id="tracker-pips"></div>
+
+                        <div class="flex justify-between items-center text-[11px] text-stone-400 font-lore-sys italic mt-1">
+                            <span id="tracker-min-label"></span>
+                            <span id="tracker-max-label"></span>
+                        </div>
+                    </div>
+
+                    <!-- Widżet 2: Poszlaki / Ostatnio w Kronice / Raport z Polowania -->
+                    <div id="widget-notes" class="wod-panel p-4 rounded-md flex flex-col transition-all duration-300">
+                        <div class="flex items-center justify-between border-b border-sys-secondary pb-2 mb-2">
+                            <div class="flex items-center gap-2">
+                                <i id="notes-icon" class="fa-solid fa-book-skull text-sys-secondary text-sm"></i>
+                                <h3 id="editable-notes-title" contenteditable="true" spellcheck="false"
+                                    oninput="saveCurrentSystemField('notesTitle', this.innerHTML)"
+                                    class="font-display-sys text-xs font-bold tracking-widest uppercase text-sys-secondary px-1">
+                                </h3>
+                            </div>
+                            <span class="ui-control text-[10px] text-stone-500 uppercase tracking-wider font-mono-sys">EDYCJA NA ŻYWO</span>
+                        </div>
+
+                        <div id="editable-notes-content" contenteditable="true" spellcheck="false"
+                             oninput="saveCurrentSystemField('notesContent', this.innerHTML)"
+                             class="font-lore-sys text-base text-stone-200 leading-relaxed max-h-36 overflow-y-auto pr-2 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Dolny pasek narzędziowy MG (ukrywany w trybie czystym i podczas eksportu PNG) -->
+                    <div class="ui-control wod-panel px-3 py-2 rounded-md flex flex-wrap items-center gap-1.5">
+                        <button onclick="openBgModal()" class="px-2.5 py-1.5 rounded bg-black/60 hover:bg-white/10 border border-sys-secondary text-xs font-display-sys uppercase tracking-wider text-stone-200 flex items-center gap-1.5 transition-colors" title="Wybierz tło z gotowych presetów Wampira/Łowcy lub wgraj własne">
+                            <i class="fa-solid fa-image text-sys-secondary"></i> Tło Sceny
+                        </button>
+                        
+                        <button onclick="cycleParticles()" class="px-2.5 py-1.5 rounded bg-black/60 hover:bg-white/10 border border-sys-secondary text-xs font-display-sys uppercase tracking-wider text-stone-200 flex items-center gap-1.5 transition-colors" title="Zmień efekt cząsteczkowy">
+                            <i class="fa-solid fa-wand-magic-sparkles text-sys-secondary"></i> <span id="particle-label">Krwawy Popiół</span>
+                        </button>
+
+                        <button onclick="toggleLeftWidgets()" class="px-2.5 py-1.5 rounded bg-black/60 hover:bg-white/10 border border-sys-secondary text-xs font-display-sys uppercase tracking-wider text-stone-200 flex items-center gap-1.5 transition-colors" title="Pokaż lub ukryj lewe panele">
+                            <i class="fa-solid fa-table-columns text-sys-secondary"></i> Widżety
+                        </button>
+
+                        <div class="ml-auto flex items-center gap-1.5">
+                            <button onclick="toggleCleanMode()" class="px-2.5 py-1.5 rounded bg-black/70 hover:bg-white/10 border border-sys-secondary text-xs font-display-sys uppercase tracking-wider text-stone-200 flex items-center gap-1 transition-all" title="Ukryj przyciski edycji (Klawisz H)">
+                                <i class="fa-solid fa-eye-slash text-sys-secondary"></i> Widok Czysty
+                            </button>
+
+                            <button id="export-png-btn" onclick="exportSceneToPNG()" class="px-3 py-1.5 rounded bg-sys-primary hover:brightness-110 border border-sys-secondary text-xs font-display-sys uppercase tracking-wider font-semibold text-white flex items-center gap-1.5 shadow-lg transition-all" title="Wygeneruj i pobierz gotowy plik PNG 1920x1080 do wgrania na The Forge">
+                                <i class="fa-solid fa-download"></i> Pobierz PNG (Foundry)
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 5. PRAWA STRONA: PASEK NA TOKENY POSTACI GRACZY (KOTERIA / KOMÓRKA) -->
+                <aside class="h-full flex flex-col justify-center items-end pointer-events-auto z-40">
+                    <div class="wod-panel h-full max-h-[85vh] w-80 md:w-[350px] rounded-lg p-3.5 flex flex-col justify-between border-l-2 border-l-[var(--accent-secondary)] relative">
+                        
+                        <!-- Nagłówek Paska Tokenów -->
+                        <div class="text-center border-b border-sys-secondary pb-2.5">
+                            <div class="flex items-center justify-center gap-2">
+                                <span id="dock-header-badge-left" class="w-2 h-2 rotate-45 bg-sys-primary inline-block"></span>
+                                <h2 id="editable-group-name" contenteditable="true" spellcheck="false"
+                                    oninput="saveCurrentSystemField('groupName', this.innerHTML)"
+                                    class="font-display-sys font-bold text-sm tracking-[0.18em] uppercase text-sys-secondary px-1"
+                                    title="Kliknij, aby wpisać nazwę Koterii (Wampir) lub Komórki (Łowca)">
+                                </h2>
+                                <span id="dock-header-badge-right" class="w-2 h-2 rotate-45 bg-sys-primary inline-block"></span>
+                            </div>
+                            <p id="dock-subtitle" class="text-[11px] font-lore-sys italic text-stone-400 mt-0.5">
+                                Miejsce na tokeny postaci graczy
+                            </p>
+
+                            <!-- Przełącznik trybu gniazd: Gniazda Foundry VTT vs Wgrane Portrety -->
+                            <div class="ui-control flex items-center justify-center gap-1 mt-2 bg-black/60 p-1 rounded border border-white/10">
+                                <button id="mode-foundry-btn" onclick="setTokenMode('foundry')" 
+                                        class="flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider transition-all">
+                                    Gniazda Foundry VTT
+                                </button>
+                                <button id="mode-portrait-btn" onclick="setTokenMode('portrait')" 
+                                        class="flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider transition-all">
+                                    Portrety Postaci
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Pionowa Lista Slotów na Tokeny Graczy -->
+                        <div id="token-slots-container" class="flex-1 overflow-y-auto py-2.5 px-1 flex flex-col justify-around gap-2.5">
+                            <!-- Sloty generowane przez JS -->
+                        </div>
+
+                        <!-- Stopka Paska Tokenów: Liczba graczy i przyciski +/- -->
+                        <div class="ui-control pt-2 border-t border-sys-secondary flex items-center justify-between text-xs">
+                            <span class="text-[11px] text-stone-400 font-lore-sys italic">
+                                Aktywne miejsca: <strong id="slot-count-badge" class="text-sys-secondary not-italic font-display-sys">5</strong> (maks. 7)
+                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="removeTokenSlot()" class="w-7 h-7 rounded bg-black/60 hover:bg-sys-primary border border-sys-secondary text-stone-200 flex items-center justify-center transition-colors" title="Usuń ostatni slot">
+                                    <i class="fa-solid fa-minus text-xs"></i>
+                                </button>
+                                <button onclick="addTokenSlot()" class="w-7 h-7 rounded bg-black/60 hover:bg-sys-primary border border-sys-secondary text-stone-200 flex items-center justify-center transition-colors" title="Dodaj nowy slot na token gracza">
+                                    <i class="fa-solid fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </aside>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. MODAL WYBORU TŁA SCENY (Dedykowane presety dla Wampira i Łowcy) -->
+    <div id="bg-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="wod-panel max-w-2xl w-full rounded-lg p-6 border border-sys-secondary relative">
+            <div class="flex items-center justify-between border-b border-sys-secondary pb-3 mb-4">
+                <h3 class="font-display-sys text-lg font-bold text-sys-secondary tracking-wider uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-panorama text-sys-accent"></i> Biblioteka Tła Sceny (Wampir & Łowca)
+                </h3>
+                <button onclick="closeBgModal()" class="text-stone-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Presety Wampir: Maskarada -->
+            <div class="mb-4">
+                <label class="block font-display-sys text-xs uppercase tracking-wider text-red-400 mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-droplet"></i> Motywy Wampir: Maskarada (Gotyk, Elizjum, Rytuał):
+                </label>
+                <div class="grid grid-cols-3 gap-2.5">
+                    <button onclick="selectPresetBg('vampire', 0)" class="group relative h-20 rounded overflow-hidden border border-sys-secondary hover:border-red-500 transition-all">
+                        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform" crossorigin="anonymous" alt="Gotycka Metropolia">
+                        <span class="absolute inset-x-0 bottom-0 bg-black/85 text-[10px] font-display-sys py-1 text-center text-stone-200">Gotycka Metropolia</span>
+                    </button>
+                    <button onclick="selectPresetBg('vampire', 1)" class="group relative h-20 rounded overflow-hidden border border-sys-secondary hover:border-red-500 transition-all">
+                        <img src="https://images.unsplash.com/photo-1514539079130-25950c84af65?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform" crossorigin="anonymous" alt="Elizjum Camarilli">
+                        <span class="absolute inset-x-0 bottom-0 bg-black/85 text-[10px] font-display-sys py-1 text-center text-stone-200">Elizjum Camarilli</span>
+                    </button>
+                    <button onclick="selectPresetBg('vampire', 2)" class="group relative h-20 rounded overflow-hidden border border-sys-secondary hover:border-red-500 transition-all">
+                        <img src="https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform" crossorigin="anonymous" alt="Nekropolia Hecata">
+                        <span class="absolute inset-x-0 bottom-0 bg-black/85 text-[10px] font-display-sys py-1 text-center text-stone-200">Nekropolia / Cmentarz</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Presety Łowca: Porachunki -->
+            <div class="mb-5">
+                <label class="block font-display-sys text-xs uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-crosshairs"></i> Motywy Łowca: Porachunki (Sodowe latarnie, Las, Kryjówka):
+                </label>
+                <div class="grid grid-cols-3 gap-2.5">
+                    <button onclick="selectPresetBg('hunter', 0)" class="group relative h-20 rounded overflow-hidden border border-sys-secondary hover:border-amber-500 transition-all">
+                        <img src="https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform" crossorigin="anonymous" alt="Ulica w deszczu">
+                        <span class="absolute inset-x-0 bottom-0 bg-black/85 text-[10px] font-display-sys py-1 text-center text-stone-200">Dzielnica Przemysłowa</span>
+                    </button>
+                    <button onclick="selectPresetBg('hunter', 1)" class="group relative h-20 rounded overflow-hidden border border-sys-secondary hover:border-amber-500 transition-all">
+                        <img src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform" crossorigin="anonymous" alt="Las we mgle">
+                        <span class="absolute inset-x-0 bottom-0 bg-black/85 text-[10px] font-display-sys py-1 text-center text-stone-200">Obława w Lesie</span>
+                    </button>
+                    <button onclick="selectPresetBg('hunter', 2)" class="group relative h-20 rounded overflow-hidden border border-sys-secondary hover:border-amber-500 transition-all">
+                        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover brightness-50 sepia group-hover:scale-105 transition-transform" crossorigin="anonymous" alt="Sodowa Noc">
+                        <span class="absolute inset-x-0 bottom-0 bg-black/85 text-[10px] font-display-sys py-1 text-center text-stone-200">Bursztynowy Zmierzch</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Własny URL lub plik z dysku -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block font-display-sys text-xs uppercase tracking-wider text-stone-300 mb-1">
+                        Własny adres URL obrazu:
+                    </label>
+                    <div class="flex gap-1.5">
+                        <input type="text" id="custom-bg-url" placeholder="https://..." 
+                               class="flex-1 bg-black/70 border border-sys-secondary rounded px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none">
+                        <button onclick="applyCustomBgUrl()" class="px-3 py-1.5 bg-sys-primary text-white font-display-sys text-xs uppercase rounded">
+                            OK
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-display-sys text-xs uppercase tracking-wider text-stone-300 mb-1">
+                        Wgraj plik z dysku:
+                    </label>
+                    <label class="flex items-center justify-center gap-2 w-full py-1.5 px-3 border border-dashed border-sys-secondary rounded bg-black/50 hover:bg-white/5 cursor-pointer text-xs font-display-sys text-sys-secondary">
+                        <i class="fa-solid fa-upload"></i> Wybierz plik z komputera
+                        <input type="file" id="bg-file-input" accept="image/*" class="hidden" onchange="handleBgFileUpload(event)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Jasność / Ekspozycja tła -->
+            <div class="mb-5">
+                <div class="flex justify-between text-xs font-display-sys text-stone-300 mb-1">
+                    <span>Przyciemnienie tła (Ekspozycja):</span>
+                    <span id="brightness-val">65%</span>
+                </div>
+                <input type="range" id="bg-brightness" min="20" max="100" value="65" oninput="updateBgBrightness(this.value)"
+                       class="w-full accent-[var(--accent-bright)] cursor-pointer">
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="closeBgModal()" class="px-5 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 font-display-sys text-xs uppercase rounded border border-sys-secondary">
+                    Zamknij
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ukryty input do wgrywania portretu pojedynczego tokenu -->
+    <input type="file" id="token-avatar-input" accept="image/*" class="hidden" onchange="handleTokenAvatarUpload(event)">
+
+    <script>
+        /* ==========================================================================
+           DANE I KONFIGURACJA OBU SYSTEMÓW: WAMPIR (V5) ORAZ ŁOWCA (H5)
+           ========================================================================== */
+        const BG_PRESETS = {
+            vampire: [
+                "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=85",
+                "https://images.unsplash.com/photo-1514539079130-25950c84af65?auto=format&fit=crop&w=1920&q=85",
+                "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=85"
+            ],
+            hunter: [
+                "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=1920&q=85",
+                "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1920&q=85",
+                "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=85"
+            ]
+        };
+
+        const SYSTEM_CONFIG = {
+            vampire: {
+                cornerIcon: '<i class="fa-solid fa-moon text-lg"></i>',
+                watermarkSvg: `
+                    <svg class="w-16 h-16" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="18" r="11" stroke="currentColor" stroke-width="2.5"/>
+                        <path d="M16 31H48M32 29V58" stroke="currentColor" stroke-width="2.5"/>
+                        <path d="M25 46L32 58L39 46" stroke="currentColor" stroke-width="2"/>
+                    </svg>`,
+                dividerSvg: `
+                    <svg class="w-64 h-5 text-sys-accent opacity-85" viewBox="0 0 240 20" fill="none">
+                        <path d="M10 10H95L108 3L120 17L132 3L145 10H230" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="120" cy="10" r="3" fill="var(--accent-secondary)"/>
+                    </svg>`,
+                trackerIcon: '<i class="fa-solid fa-masks-theater"></i>',
+                notesIconClass: 'fa-solid fa-book-skull text-sys-secondary text-sm',
+                pipIcon: 'fa-droplet',
+                pipIconFinal: 'fa-skull',
+                pipTooltip: 'Głód',
+                trackerLabels: [
+                    "Nienaruszona Cisza",
+                    "Szepty w Elizjum",
+                    "Czujne spojrzenia",
+                    "Śledztwo Łowców",
+                    "Naruszenie Maskarady!",
+                    "DRUGA INKWIZYCJA / KRWAWE ŁOWY"
+                ],
+                trackerMin: "Cisza w domenie",
+                trackerMax: "Druga Inkwizycja na tropie",
+                dockSubtitle: "Miejsce na tokeny Koterii (Klan i Głód)"
+            },
+            hunter: {
+                cornerIcon: '<i class="fa-solid fa-crosshairs text-lg"></i>',
+                watermarkSvg: `
+                    <svg class="w-16 h-16" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="22" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4"/>
+                        <circle cx="32" cy="32" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M32 4V16M32 48V60M4 32H16M48 32H60" stroke="currentColor" stroke-width="2.5"/>
+                    </svg>`,
+                dividerSvg: `
+                    <svg class="w-64 h-5 text-sys-accent opacity-90" viewBox="0 0 240 20" fill="none">
+                        <path d="M10 10H92L102 4H138L148 10H230" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="117" y="7" width="6" height="6" transform="rotate(45 120 10)" fill="var(--accent-secondary)"/>
+                    </svg>`,
+                trackerIcon: '<i class="fa-solid fa-triangle-exclamation"></i>',
+                notesIconClass: 'fa-solid fa-folder-open text-sys-secondary text-sm',
+                pipIcon: 'fa-fire-flame-simple',
+                pipIconFinal: 'fa-radiation',
+                pipTooltip: 'Desperacja',
+                trackerLabels: [
+                    "Rekonesans terenowy",
+                    "Pierwsze poszlaki",
+                    "Cel wie o Komórce",
+                    "Bezpośrednia konfrontacja",
+                    "Odwet Koterii / Bestii!",
+                    "STAN KRYTYCZNY / OBŁAWA"
+                ],
+                trackerMin: "Ukryta obserwacja",
+                trackerMax: "Cel poluje na Komórkę",
+                dockSubtitle: "Miejsce na tokeny Komórki (Kredo i Desperacja)"
+            }
+        };
+
+        const DEFAULT_STATE = {
+            activeSystem: 'vampire', // 'vampire' lub 'hunter'
+            tokenMode: 'foundry',    // 'foundry' (puste gniazda) lub 'portrait' (portrety)
+            widgetsVisible: true,
+            systems: {
+                vampire: {
+                    bgUrl: BG_PRESETS.vampire[0],
+                    bgBrightness: 65,
+                    particleMode: 'ash',
+                    trackerLevel: 2,
+                    location: 'NOWY JORK BY NIGHT',
+                    date: 'Listopad 2026 • 02:15 przed świtem',
+                    systemLabel: 'WAMPIR: MASKARADA • 5. EDYCJA',
+                    campaignTitle: 'KRWAWE POPOŁUDNIE',
+                    campaignSubtitle: 'Akt II: Cienie pod Katedrą św. Patryka',
+                    trackerTitle: 'ZAGROŻENIE MASKARADY',
+                    notesTitle: 'OSTATNIO W KRONICE & POSZLAKI',
+                    notesContent: '• Książę dał koterii trzy noce na odnalezienie zaginionego primogena Nosferatu.<br>• W dokach na Brooklynie widziano watahy Wilkołaków węszące wokół magazynu #14.<br>• Krew na miejscu zbrodni w klubie „Elysium” nosiła ślady Taumaturgii.',
+                    groupName: 'KOTERIA NOCNYCH KRUKÓW',
+                    players: [
+                        { name: "Victor Vance", sub: "Ventrue • Camarilla", pips: 1, avatar: "" },
+                        { name: "Lilith Moretti", sub: "Lasombra • Cień", pips: 2, avatar: "" },
+                        { name: "Kaelen „Szpon”", sub: "Gangrel • Autarkis", pips: 3, avatar: "" },
+                        { name: "Siostra Miriam", sub: "Malkavian • Wyrocznia", pips: 1, avatar: "" },
+                        { name: "Julian Cross", sub: "Toreador • Harpia", pips: 2, avatar: "" }
+                    ]
+                },
+                hunter: {
+                    bgUrl: BG_PRESETS.hunter[0],
+                    bgBrightness: 62,
+                    particleMode: 'embers',
+                    trackerLevel: 3,
+                    location: 'SEKTOR PRZEMYSŁOWY • DOKI #14',
+                    date: '18 Października • 01:40 (Częstotliwość 148.5 MHz)',
+                    systemLabel: 'ŁOWCA: PORACHUNKI • 5. EDYCJA',
+                    campaignTitle: 'PROJEKT: ZMIERZCH',
+                    campaignSubtitle: 'Operacja III: Gniazdo w Starej Ciepłowni',
+                    trackerTitle: 'ZAGROŻENIE / DESPERACJA KOMÓRKI',
+                    notesTitle: 'TABLICA ŚLEDZTWA & TROPY',
+                    notesContent: '• Furgonetka z przyciemnianymi szybami opuszcza rzeźnię wyłącznie po 23:00.<br>• Kamera termowizyjna wykazała brak ciepła ciała u trzech ochroniarzy klubu.<br>• Przygotować ładunki zapalające i flary UV przed wejściem do tuneli.',
+                    groupName: 'KOMÓRKA „CZARNY BURSZTYN”',
+                    players: [
+                        { name: "Marek „Kosa” Kowalski", sub: "Kredo Bojowe • Odwet", pips: 3, avatar: "" },
+                        { name: "Dr Nina Zawadzka", sub: "Kredo Dociekliwe • Przysięga", pips: 2, avatar: "" },
+                        { name: "Ojciec Gabriel", sub: "Kredo Wiernych • Pokuta", pips: 1, avatar: "" },
+                        { name: "Igor „Kret” Nowak", sub: "Kredo Podziemne • Chciwość", pips: 2, avatar: "" },
+                        { name: "Sara Lindqvist", sub: "Kredo Przedsiębiorcze • Duma", pips: 3, avatar: "" }
+                    ]
+                }
+            }
+        };
+
+        let appState = JSON.parse(localStorage.getItem('wod_dual_foundry_v2')) || DEFAULT_STATE;
+        let activeAvatarSlotIndex = null;
+
+        function saveState() {
+            try {
+                localStorage.setItem('wod_dual_foundry_v2', JSON.stringify(appState));
+            } catch (e) {
+                console.warn("Przekroczono limit pamięci przeglądarki:", e);
+            }
+        }
+
+        function getCurrentSysData() {
+            return appState.systems[appState.activeSystem];
+        }
+
+        /* ==========================================================================
+           INICJALIZACJA I PRZEŁĄCZANIE SYSTEMU (WAMPIR <-> ŁOWCA)
+           ========================================================================== */
+        window.onload = function() {
+            initAtmosphereCanvas();
+            applySystemUI();
+            updateTokenModeButtons();
+            updateWidgetsVisibility();
+
+            // Skrót klawiszowy 'H' do ukrywania interfejsu (tylko gdy nie piszemy w polu edycji)
+            window.addEventListener('keydown', (e) => {
+                if ((e.key === 'h' || e.key === 'H') && !e.target.isContentEditable && e.target.tagName !== 'INPUT') {
+                    toggleCleanMode();
+                }
+            });
+        };
+
+        function switchSystem(systemName) {
+            if (appState.activeSystem === systemName) return;
+            appState.activeSystem = systemName;
+            applySystemUI();
+            createParticles();
+            saveState();
+        }
+
+        function applySystemUI() {
+            const sys = appState.activeSystem;
+            const sysData = getCurrentSysData();
+            const cfg = SYSTEM_CONFIG[sys];
+
+            // Atrybut na body zmieniający zmienne CSS
+            document.body.setAttribute('data-system', sys);
+
+            // Podświetlenie aktywnego przycisku w prawym górnym rogu
+            const btnVamp = document.getElementById('top-btn-vampire');
+            const btnHunt = document.getElementById('top-btn-hunter');
+            if (sys === 'vampire') {
+                btnVamp.className = "px-3 py-1.5 rounded text-xs font-display-sys tracking-wider uppercase transition-all flex items-center gap-1.5 bg-[#9e0b16] text-white font-bold shadow-[0_0_12px_rgba(230,25,46,0.5)]";
+                btnHunt.className = "px-3 py-1.5 rounded text-xs font-display-sys tracking-wider uppercase transition-all flex items-center gap-1.5 text-stone-400 hover:text-white";
+            } else {
+                btnHunt.className = "px-3 py-1.5 rounded text-xs font-display-sys tracking-wider uppercase transition-all flex items-center gap-1.5 bg-[#d95318] text-white font-bold shadow-[0_0_12px_rgba(255,107,26,0.5)]";
+                btnVamp.className = "px-3 py-1.5 rounded text-xs font-display-sys tracking-wider uppercase transition-all flex items-center gap-1.5 text-stone-400 hover:text-white";
+            }
+
+            // Ikony i ornamenty SVG
+            document.getElementById('system-corner-icon').innerHTML = cfg.cornerIcon;
+            document.getElementById('header-watermark').innerHTML = cfg.watermarkSvg;
+            document.getElementById('header-divider').innerHTML = cfg.dividerSvg;
+            document.getElementById('tracker-icon').innerHTML = cfg.trackerIcon;
+            document.getElementById('notes-icon').className = cfg.notesIconClass;
+            document.getElementById('tracker-min-label').innerText = cfg.trackerMin;
+            document.getElementById('tracker-max-label').innerText = cfg.trackerMax;
+            document.getElementById('dock-subtitle').innerText = cfg.dockSubtitle;
+
+            // Wypełnienie tekstów edytowalnych danymi wybranego systemu
+            document.getElementById('editable-location').innerHTML = sysData.location;
+            document.getElementById('editable-date').innerHTML = sysData.date;
+            document.getElementById('editable-system-label').innerHTML = sysData.systemLabel;
+            document.getElementById('editable-campaign-title').innerHTML = sysData.campaignTitle;
+            document.getElementById('editable-campaign-subtitle').innerHTML = sysData.campaignSubtitle;
+            document.getElementById('editable-tracker-title').innerHTML = sysData.trackerTitle;
+            document.getElementById('editable-notes-title').innerHTML = sysData.notesTitle;
+            document.getElementById('editable-notes-content').innerHTML = sysData.notesContent;
+            document.getElementById('editable-group-name').innerHTML = sysData.groupName;
+
+            // Tło, licznik zagrożenia i sloty na tokeny
+            applyBackground();
+            renderSystemTracker();
+            renderTokenSlots();
+            updateParticleButtonLabel();
+        }
+
+        function saveCurrentSystemField(fieldKey, value) {
+            const sysData = getCurrentSysData();
+            sysData[fieldKey] = value;
+            saveState();
+        }
+
+        /* ==========================================================================
+           ZARZĄDZANIE TŁEM SCENY
+           ========================================================================== */
+        function applyBackground() {
+            const sysData = getCurrentSysData();
+            const bgLayer = document.getElementById('bg-layer');
+            bgLayer.style.backgroundImage = `url('${sysData.bgUrl}')`;
+            bgLayer.style.filter = `brightness(${sysData.bgBrightness}%) contrast(112%) saturate(88%)`;
+            document.getElementById('bg-brightness').value = sysData.bgBrightness;
+            document.getElementById('brightness-val').innerText = `${sysData.bgBrightness}%`;
+        }
+
+        function selectPresetBg(category, index) {
+            const sysData = getCurrentSysData();
+            sysData.bgUrl = BG_PRESETS[category][index];
+            applyBackground();
+            saveState();
+        }
+
+        function applyCustomBgUrl() {
+            const url = document.getElementById('custom-bg-url').value.trim();
+            if (url) {
+                const sysData = getCurrentSysData();
+                sysData.bgUrl = url;
+                applyBackground();
+                saveState();
+            }
+        }
+
+        function handleBgFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const sysData = getCurrentSysData();
+                sysData.bgUrl = e.target.result;
+                applyBackground();
+                saveState();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateBgBrightness(val) {
+            const sysData = getCurrentSysData();
+            sysData.bgBrightness = parseInt(val, 10);
+            applyBackground();
+            saveState();
+        }
+
+        function openBgModal() {
+            const modal = document.getElementById('bg-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBgModal() {
+            const modal = document.getElementById('bg-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        /* ==========================================================================
+           LICZNIK ZAGROŻENIA MASKARADY (V5) / DESPERACJI I ZAGROŻENIA (H5)
+           ========================================================================== */
+        function renderSystemTracker() {
+            const sys = appState.activeSystem;
+            const sysData = getCurrentSysData();
+            const cfg = SYSTEM_CONFIG[sys];
+            const container = document.getElementById('tracker-pips');
+            const label = document.getElementById('tracker-status-label');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= 5; i++) {
+                const active = i <= sysData.trackerLevel;
+                const btn = document.createElement('button');
+                btn.className = `flex-1 h-9 rounded border flex items-center justify-center transition-all ${
+                    active 
+                    ? 'bg-sys-primary border-[var(--accent-bright)] text-white shadow-[0_0_12px_var(--accent-primary)]' 
+                    : 'bg-black/55 border-sys-secondary text-stone-600 hover:border-stone-400'
+                }`;
+                const iconName = (i === 5) ? cfg.pipIconFinal : cfg.pipIcon;
+                btn.innerHTML = `<i class="fa-solid ${iconName} text-sm"></i>`;
+                btn.title = `Ustaw poziom: ${i}/5`;
+                btn.onclick = () => {
+                    sysData.trackerLevel = (sysData.trackerLevel === i) ? i - 1 : i;
+                    renderSystemTracker();
+                    saveState();
+                };
+                container.appendChild(btn);
+            }
+
+            label.innerText = cfg.trackerLabels[sysData.trackerLevel] || cfg.trackerLabels[0];
+        }
+
+        /* ==========================================================================
+           PRAWY PASEK NA TOKENY POSTACI GRACZY (FOUNDRY VTT DOCK)
+           ========================================================================== */
+        function setTokenMode(mode) {
+            appState.tokenMode = mode;
+            updateTokenModeButtons();
+            renderTokenSlots();
+            saveState();
+        }
+
+        function updateTokenModeButtons() {
+            const foundryBtn = document.getElementById('mode-foundry-btn');
+            const portraitBtn = document.getElementById('mode-portrait-btn');
+
+            if (appState.tokenMode === 'foundry') {
+                foundryBtn.className = "flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider bg-sys-primary text-white font-bold shadow";
+                portraitBtn.className = "flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider text-stone-400 hover:text-white";
+            } else {
+                portraitBtn.className = "flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider bg-sys-primary text-white font-bold shadow";
+                foundryBtn.className = "flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider text-stone-400 hover:text-white";
+            }
+        }
+
+        function renderTokenSlots() {
+            const sys = appState.activeSystem;
+            const sysData = getCurrentSysData();
+            const cfg = SYSTEM_CONFIG[sys];
+            const container = document.getElementById('token-slots-container');
+            const badge = document.getElementById('slot-count-badge');
+            container.innerHTML = '';
+            badge.innerText = sysData.players.length;
+
+            const count = sysData.players.length;
+            const ringSizeClass = count <= 4 ? 'w-20 h-20' : (count === 5 ? 'w-16 h-16' : 'w-14 h-14');
+
+            sysData.players.forEach((player, idx) => {
+                const slot = document.createElement('div');
+                slot.className = "token-slot flex items-center gap-3.5 group px-1.5 py-1 rounded hover:bg-white/[0.03] transition-colors";
+
+                // 1. Zawartość okrągłego gniazda na token
+                let ringInner = '';
+                if (appState.tokenMode === 'foundry') {
+                    // Tryb pustego gniazda pod fizyczne tokeny w Foundry VTT
+                    ringInner = `
+                        <div class="w-full h-full rounded-full foundry-socket-grid flex items-center justify-center relative overflow-hidden">
+                            <div class="w-3.5 h-[1px] bg-[var(--accent-secondary)] opacity-35 absolute"></div>
+                            <div class="h-3.5 w-[1px] bg-[var(--accent-secondary)] opacity-35 absolute"></div>
+                            <span class="font-display-sys text-[10px] text-sys-secondary opacity-40 uppercase tracking-widest select-none">
+                                ${idx + 1}
+                            </span>
+                        </div>
+                    `;
+                } else {
+                    // Tryb portretu postaci
+                    const initials = encodeURIComponent((player.name || 'X').charAt(0));
+                    const bgHex = sys === 'vampire' ? '1a090d' : '1c130a';
+                    const fgHex = sys === 'vampire' ? 'c9a96e' : 'e5a93c';
+                    const avatarSrc = player.avatar || `https://placehold.co/160x160/${bgHex}/${fgHex}?text=${initials}`;
+                    ringInner = `
+                        <div onclick="triggerTokenAvatarUpload(${idx})" class="w-full h-full rounded-full overflow-hidden cursor-pointer relative group/avatar" title="Kliknij, aby wgrać portret/token postaci">
+                            <img src="${avatarSrc}" class="w-full h-full object-cover" crossorigin="anonymous" alt="Token">
+                            <div class="ui-control absolute inset-0 bg-black/65 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
+                                <i class="fa-solid fa-camera text-sys-secondary text-sm"></i>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 2. Mini-licznik Głodu (V5) lub Desperacji (H5) przy każdej postaci (5 kropek/ikon)
+                let pipsHtml = '';
+                for (let p = 1; p <= 5; p++) {
+                    const isFilled = p <= (player.pips || 0);
+                    pipsHtml += `
+                        <button onclick="togglePlayerPip(${idx}, ${p})" 
+                                title="${cfg.pipTooltip}: ${p}/5"
+                                class="text-[11px] transition-transform hover:scale-125 ${isFilled ? 'text-sys-accent' : 'text-stone-600 hover:text-stone-400'}">
+                            <i class="fa-solid ${cfg.pipIcon}"></i>
+                        </button>
+                    `;
+                }
+
+                slot.innerHTML = `
+                    <!-- Okrągłe gniazdo na Token -->
+                    <div class="token-ring ${ringSizeClass} shrink-0 flex items-center justify-center p-1">
+                        ${ringInner}
+                    </div>
+
+                    <!-- Dane postaci: Imię + Klan/Kredo + 5-stopniowy Głód/Desperacja -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-1">
+                            <div contenteditable="true" spellcheck="false"
+                                 oninput="updatePlayerField(${idx}, 'name', this.innerText)"
+                                 class="font-display-sys font-bold text-sm text-stone-100 tracking-wide truncate px-1 focus:whitespace-normal"
+                                 title="Kliknij, aby wpisać imię postaci">
+                                ${player.name}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2 mt-0.5 px-1">
+                            <div contenteditable="true" spellcheck="false"
+                                 oninput="updatePlayerField(${idx}, 'sub', this.innerText)"
+                                 class="font-lore-sys italic text-xs md:text-sm text-sys-secondary truncate"
+                                 title="Kliknij, aby wpisać Klan (Wampir) lub Kredo i Impuls (Łowca)">
+                                ${player.sub}
+                            </div>
+                            <!-- Klikalny 5-pipowy wskaźnik Głodu / Desperacji -->
+                            <div class="flex items-center gap-1 shrink-0" title="Kliknij, aby zmienić ${cfg.pipTooltip}">
+                                ${pipsHtml}
+                            </div>
+                        </div>
+
+                        <div class="h-[1px] w-full bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary-dim)] to-transparent mt-1.5"></div>
+                    </div>
+                `;
+
+                container.appendChild(slot);
+            });
+        }
+
+        function updatePlayerField(index, field, value) {
+            const sysData = getCurrentSysData();
+            if (sysData.players[index]) {
+                sysData.players[index][field] = value.trim();
+                saveState();
+            }
+        }
+
+        function togglePlayerPip(playerIndex, pipValue) {
+            const sysData = getCurrentSysData();
+            const player = sysData.players[playerIndex];
+            if (!player) return;
+            player.pips = (player.pips === pipValue) ? pipValue - 1 : pipValue;
+            renderTokenSlots();
+            saveState();
+        }
+
+        function triggerTokenAvatarUpload(index) {
+            activeAvatarSlotIndex = index;
+            document.getElementById('token-avatar-input').click();
+        }
+
+        function handleTokenAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file || activeAvatarSlotIndex === null) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const sysData = getCurrentSysData();
+                sysData.players[activeAvatarSlotIndex].avatar = e.target.result;
+                renderTokenSlots();
+                saveState();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addTokenSlot() {
+            const sysData = getCurrentSysData();
+            if (sysData.players.length >= 7) return;
+            const isVamp = appState.activeSystem === 'vampire';
+            sysData.players.push({
+                name: isVamp ? `Spokrewniony #${sysData.players.length + 1}` : `Łowca #${sysData.players.length + 1}`,
+                sub: isVamp ? "Klan Nieznany" : "Kredo Bojowe",
+                pips: 1,
+                avatar: ""
+            });
+            renderTokenSlots();
+            saveState();
+        }
+
+        function removeTokenSlot() {
+            const sysData = getCurrentSysData();
+            if (sysData.players.length <= 1) return;
+            sysData.players.pop();
+            renderTokenSlots();
+            saveState();
+        }
+
+        /* ==========================================================================
+           WIDOCZNOŚĆ WIDŻETÓW, TRYB CZYSTY I EKSPORT PNG (1920x1080) DO THE FORGE
+           ========================================================================== */
+        function toggleLeftWidgets() {
+            appState.widgetsVisible = !appState.widgetsVisible;
+            updateWidgetsVisibility();
+            saveState();
+        }
+
+        function updateWidgetsVisibility() {
+            const clock = document.getElementById('widget-clock');
+            const tracker = document.getElementById('widget-tracker');
+            const notes = document.getElementById('widget-notes');
+
+            if (appState.widgetsVisible) {
+                clock.classList.remove('opacity-0', 'pointer-events-none');
+                tracker.classList.remove('opacity-0', 'pointer-events-none');
+                notes.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                clock.classList.add('opacity-0', 'pointer-events-none');
+                tracker.classList.add('opacity-0', 'pointer-events-none');
+                notes.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function toggleCleanMode() {
+            document.body.classList.toggle('clean-mode');
+            const exitBtn = document.getElementById('exit-clean-mode-btn');
+            if (document.body.classList.contains('clean-mode')) {
+                exitBtn.classList.remove('hidden');
+            } else {
+                exitBtn.classList.add('hidden');
+            }
+        }
+
+        // Bezpośredni eksport sceny do pliku PNG gotowego do wgrania na The Forge
+        async function exportSceneToPNG() {
+            const exportBtn = document.getElementById('export-png-btn');
+            const originalHtml = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Renderowanie...';
+            exportBtn.disabled = true;
+
+            // Tymczasowo ukrywamy kontrolki edycji na czas zrzutu
+            const wasClean = document.body.classList.contains('clean-mode');
+            if (!wasClean) document.body.classList.add('clean-mode');
+            document.getElementById('exit-clean-mode-btn').classList.add('hidden');
+
+            try {
+                const stage = document.getElementById('capture-stage');
+                const renderedCanvas = await html2canvas(stage, {
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#070609',
+                    scale: 1920 / window.innerWidth // Skalowanie pod rozdzielczość Full HD
+                });
+
+                const link = document.createElement('a');
+                const sysSlug = appState.activeSystem === 'vampire' ? 'wampir-maskarada' : 'lowca-porachunki';
+                link.download = `foundry-vtt-landing-${sysSlug}.png`;
+                link.href = renderedCanvas.toDataURL('image/png');
+                link.click();
+            } catch (err) {
+                console.error("Błąd podczas generowania PNG:", err);
+            } finally {
+                if (!wasClean) {
+                    document.body.classList.remove('clean-mode');
+                } else {
+                    document.getElementById('exit-clean-mode-btn').classList.remove('hidden');
+                }
+                exportBtn.innerHTML = originalHtml;
+                exportBtn.disabled = false;
+            }
+        }
+
+        /* ==========================================================================
+           SILNIK ATMOSFERYCZNY CANVAS (KRWAWY POPIÓŁ, BURSZTYNOWY ŻAR, ULEWA, MGŁA)
+           ========================================================================== */
+        let canvas, ctx;
+        let particles = [];
+
+        const PARTICLE_MODES = [
+            { id: 'ash', label: 'Krwawy Popiół' },
+            { id: 'embers', label: 'Bursztynowy Żar' },
+            { id: 'rain', label: 'Nocna Ulewa' },
+            { id: 'fog', label: 'Mgła / Pył' },
+            { id: 'none', label: 'Brak Efektu' }
+        ];
+
+        function updateParticleButtonLabel() {
+            const sysData = getCurrentSysData();
+            const modeObj = PARTICLE_MODES.find(m => m.id === sysData.particleMode) || PARTICLE_MODES[0];
+            document.getElementById('particle-label').innerText = modeObj.label;
+        }
+
+        function cycleParticles() {
+            const sysData = getCurrentSysData();
+            const currentIndex = PARTICLE_MODES.findIndex(m => m.id === sysData.particleMode);
+            const nextIndex = (currentIndex + 1) % PARTICLE_MODES.length;
+            sysData.particleMode = PARTICLE_MODES[nextIndex].id;
+            updateParticleButtonLabel();
+            createParticles();
+            saveState();
+        }
+
+        function initAtmosphereCanvas() {
+            canvas = document.getElementById('atmosphere-canvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            createParticles();
+            requestAnimationFrame(animateParticles);
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticles() {
+            particles = [];
+            const sysData = getCurrentSysData();
+            if (!sysData || sysData.particleMode === 'none') return;
+
+            const count = sysData.particleMode === 'rain' ? 115 : 68;
+
+            for (let i = 0; i < count; i++) {
+                const isColored = Math.random() < 0.45;
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2.4 + 0.8,
+                    speedX: (Math.random() - 0.35) * 0.65,
+                    speedY: sysData.particleMode === 'rain' 
+                            ? (Math.random() * 8 + 10) 
+                            : (Math.random() * 0.75 + 0.2),
+                    alpha: Math.random() * 0.65 + 0.15,
+                    isColored: isColored,
+                    wobble: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const sysData = getCurrentSysData();
+            const mode = sysData ? sysData.particleMode : 'none';
+
+            if (mode !== 'none') {
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+
+                    if (mode === 'ash' || mode === 'embers') {
+                        p.wobble += 0.02;
+                        p.x += p.speedX + Math.sin(p.wobble) * 0.35;
+                        p.y -= p.speedY;
+
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        if (p.isColored) {
+                            if (mode === 'embers') {
+                                ctx.fillStyle = `rgba(255, 115, 25, ${p.alpha})`;
+                                ctx.shadowBlur = 9;
+                                ctx.shadowColor = "rgba(255, 140, 40, 0.85)";
+                            } else {
+                                ctx.fillStyle = `rgba(220, 25, 45, ${p.alpha})`;
+                                ctx.shadowBlur = 8;
+                                ctx.shadowColor = "rgba(255, 30, 56, 0.8)";
+                            }
+                        } else {
+                            ctx.fillStyle = `rgba(175, 170, 180, ${p.alpha * 0.55})`;
+                            ctx.shadowBlur = 0;
+                        }
+                        ctx.fill();
+
+                        if (p.y < -10) {
+                            p.y = canvas.height + 10;
+                            p.x = Math.random() * canvas.width;
+                        }
+                    } else if (mode === 'rain') {
+                        p.x -= 1.3;
+                        p.y += p.speedY;
+
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p.x - 2.2, p.y + 17);
+                        ctx.strokeStyle = `rgba(185, 200, 220, ${p.alpha * 0.38})`;
+                        ctx.lineWidth = 1;
+                        ctx.shadowBlur = 0;
+                        ctx.stroke();
+
+                        if (p.y > canvas.height) {
+                            p.y = -20;
+                            p.x = Math.random() * canvas.width;
+                        }
+                    } else if (mode === 'fog') {
+                        p.wobble += 0.01;
+                        p.x += Math.cos(p.wobble) * 0.25;
+                        p.y += Math.sin(p.wobble) * 0.15;
+
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius * 1.4, 0, Math.PI * 2);
+                        ctx.fillStyle = p.isColored 
+                            ? `rgba(215, 165, 80, ${p.alpha * 0.42})` 
+                            : `rgba(200, 195, 210, ${p.alpha * 0.25})`;
+                        ctx.shadowBlur = 4;
+                        ctx.shadowColor = "rgba(215, 165, 80, 0.35)";
+                        ctx.fill();
+                    }
+
+                    if (p.x > canvas.width + 10) p.x = -10;
+                    if (p.x < -10) p.x = canvas.width + 10;
+                }
+            }
+
+            requestAnimationFrame(animateParticles);
+        }
+    </script>
+</body>
+</html>
