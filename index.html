@@ -316,10 +316,10 @@
             </header>
 
             <!-- ŚRODKOWA I DOLNA SEKCJA -->
-            <div class="flex-1 flex items-end justify-between gap-6 mt-4 overflow-hidden pointer-events-none">
+            <div class="flex-1 flex items-end justify-between gap-6 mt-3 overflow-hidden pointer-events-none">
 
                 <!-- LEWA DOLNA KOLUMNA: Licznik Systemowy (Maskarada vs Zagrożenie/Desperacja) + Notatki + Narzędzia -->
-                <div class="flex flex-col gap-3.5 max-w-md w-full pointer-events-auto pb-0.5">
+                <div class="flex flex-col gap-3 max-w-md w-full pointer-events-auto pb-0.5">
                     
                     <!-- Widżet 1: Licznik Zagrożenia Maskarady (V5) / Poziom Zagrożenia i Desperacji (H5) -->
                     <div id="widget-tracker" class="wod-panel-accent p-4 rounded-md transition-all duration-300">
@@ -377,6 +377,10 @@
                             <i class="fa-solid fa-table-columns text-sys-secondary"></i> Widżety
                         </button>
 
+                        <button onclick="openStateModal()" class="px-2.5 py-1.5 rounded bg-black/60 hover:bg-white/10 border border-sys-secondary text-xs font-display-sys uppercase tracking-wider text-stone-200 flex items-center gap-1.5 transition-colors" title="Kopiuj lub wczytaj konfigurację JSON (np. do wklejenia na GitHub Pages)">
+                            <i class="fa-solid fa-code text-sys-secondary"></i> Stan / JSON
+                        </button>
+
                         <div class="ml-auto flex items-center gap-1.5">
                             <button onclick="toggleCleanMode()" class="px-2.5 py-1.5 rounded bg-black/70 hover:bg-white/10 border border-sys-secondary text-xs font-display-sys uppercase tracking-wider text-stone-200 flex items-center gap-1 transition-all" title="Ukryj przyciski edycji (Klawisz H)">
                                 <i class="fa-solid fa-eye-slash text-sys-secondary"></i> Widok Czysty
@@ -390,12 +394,12 @@
 
                 </div>
 
-                <!-- 5. PRAWA STRONA: PASEK NA TOKENY POSTACI GRACZY (KOTERIA / KOMÓRKA) -->
+                <!-- 5. PRAWA STRONA: PASEK NA TOKENY POSTACI GRACZY (1 DO 10 SLOTÓW, ADAPTACYJNY 1/2 KOLUMNY) -->
                 <aside class="h-full flex flex-col justify-center items-end pointer-events-auto z-40">
-                    <div class="wod-panel h-full max-h-[85vh] w-80 md:w-[350px] rounded-lg p-3.5 flex flex-col justify-between border-l-2 border-l-[var(--accent-secondary)] relative">
+                    <div id="token-dock-panel" class="wod-panel h-full max-h-[85vh] w-80 md:w-[360px] rounded-lg p-3.5 flex flex-col justify-between border-l-2 border-l-[var(--accent-secondary)] relative transition-all duration-300">
                         
                         <!-- Nagłówek Paska Tokenów -->
-                        <div class="text-center border-b border-sys-secondary pb-2.5">
+                        <div class="text-center border-b border-sys-secondary pb-2">
                             <div class="flex items-center justify-center gap-2">
                                 <span id="dock-header-badge-left" class="w-2 h-2 rotate-45 bg-sys-primary inline-block"></span>
                                 <h2 id="editable-group-name" contenteditable="true" spellcheck="false"
@@ -409,34 +413,41 @@
                                 Miejsce na tokeny postaci graczy
                             </p>
 
-                            <!-- Przełącznik trybu gniazd: Gniazda Foundry VTT vs Wgrane Portrety -->
-                            <div class="ui-control flex items-center justify-center gap-1 mt-2 bg-black/60 p-1 rounded border border-white/10">
-                                <button id="mode-foundry-btn" onclick="setTokenMode('foundry')" 
-                                        class="flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider transition-all">
-                                    Gniazda Foundry VTT
-                                </button>
-                                <button id="mode-portrait-btn" onclick="setTokenMode('portrait')" 
-                                        class="flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider transition-all">
-                                    Portrety Postaci
+                            <!-- Przełącznik trybu gniazd + Szybki przełącznik 1/2 kolumny -->
+                            <div class="ui-control flex items-center justify-between gap-1.5 mt-2">
+                                <div class="flex-1 flex items-center gap-1 bg-black/60 p-1 rounded border border-white/10">
+                                    <button id="mode-foundry-btn" onclick="setTokenMode('foundry')" 
+                                            class="flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider transition-all">
+                                        Gniazda Foundry
+                                    </button>
+                                    <button id="mode-portrait-btn" onclick="setTokenMode('portrait')" 
+                                            class="flex-1 py-1 px-2 rounded text-[10px] font-display-sys uppercase tracking-wider transition-all">
+                                        Portrety
+                                    </button>
+                                </div>
+                                <button id="dock-layout-btn" onclick="cycleDockLayoutMode()" 
+                                        class="py-1.5 px-2.5 rounded bg-black/60 hover:bg-white/10 border border-sys-secondary text-[10px] font-display-sys uppercase tracking-wider text-sys-secondary transition-all shrink-0"
+                                        title="Przełącz układ paska tokenów: Automatyczny (1 kolumna dla 1-5, 2 kolumny dla 6-10) / 1 Kolumna / 2 Kolumny">
+                                    <i class="fa-solid fa-grip-vertical mr-1"></i><span id="dock-layout-label">Auto</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Pionowa Lista Slotów na Tokeny Graczy -->
-                        <div id="token-slots-container" class="flex-1 overflow-y-auto py-2.5 px-1 flex flex-col justify-around gap-2.5">
-                            <!-- Sloty generowane przez JS -->
+                        <!-- Kontener Slotów na Tokeny Graczy (Bez paska przewijania dla 1-10 graczy!) -->
+                        <div id="token-slots-container" class="flex-1 py-2 px-1 grid content-around gap-2 overflow-hidden">
+                            <!-- Sloty (1 do 10) generowane przez JS -->
                         </div>
 
-                        <!-- Stopka Paska Tokenów: Liczba graczy i przyciski +/- -->
+                        <!-- Stopka Paska Tokenów: Liczba graczy (X / 10) i przyciski +/- -->
                         <div class="ui-control pt-2 border-t border-sys-secondary flex items-center justify-between text-xs">
                             <span class="text-[11px] text-stone-400 font-lore-sys italic">
-                                Aktywne miejsca: <strong id="slot-count-badge" class="text-sys-secondary not-italic font-display-sys">5</strong> (maks. 7)
+                                Aktywne miejsca: <strong id="slot-count-badge" class="text-sys-secondary not-italic font-display-sys">5</strong> / 10
                             </span>
                             <div class="flex items-center gap-1.5">
-                                <button onclick="removeTokenSlot()" class="w-7 h-7 rounded bg-black/60 hover:bg-sys-primary border border-sys-secondary text-stone-200 flex items-center justify-center transition-colors" title="Usuń ostatni slot">
+                                <button onclick="removeTokenSlot()" class="w-7 h-7 rounded bg-black/60 hover:bg-sys-primary border border-sys-secondary text-stone-200 flex items-center justify-center transition-colors" title="Usuń ostatni slot (min. 1)">
                                     <i class="fa-solid fa-minus text-xs"></i>
                                 </button>
-                                <button onclick="addTokenSlot()" class="w-7 h-7 rounded bg-black/60 hover:bg-sys-primary border border-sys-secondary text-stone-200 flex items-center justify-center transition-colors" title="Dodaj nowy slot na token gracza">
+                                <button onclick="addTokenSlot()" class="w-7 h-7 rounded bg-black/60 hover:bg-sys-primary border border-sys-secondary text-stone-200 flex items-center justify-center transition-colors" title="Dodaj nowy slot na token gracza (maks. 10)">
                                     <i class="fa-solid fa-plus text-xs"></i>
                                 </button>
                             </div>
@@ -546,13 +557,57 @@
         </div>
     </div>
 
+    <!-- 7. MODAL EKSPORTU / IMPORTU STANU JSON (Pod GitHub Pages i kopię zapasową) -->
+    <div id="state-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="wod-panel max-w-xl w-full rounded-lg p-6 border border-sys-secondary relative">
+            <div class="flex items-center justify-between border-b border-sys-secondary pb-3 mb-4">
+                <h3 class="font-display-sys text-lg font-bold text-sys-secondary tracking-wider uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-code text-sys-accent"></i> Eksport / Import Konfiguracji (JSON)
+                </h3>
+                <button onclick="closeStateModal()" class="text-stone-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-stone-300 leading-relaxed mb-3">
+                Skopiuj poniższy kod JSON, aby zachować kopię zapasową obu kampanii (Wampir & Łowca, do 10 postaci), przenieść stan na inną przeglądarkę lub podmienić obiekt <code class="text-sys-secondary">DEFAULT_STATE</code> w pliku <code class="text-sys-secondary">index.html</code> na swoim <strong>GitHub Pages</strong>.
+            </p>
+
+            <textarea id="state-json-textarea" rows="8" spellcheck="false"
+                      class="w-full bg-black/80 border border-sys-secondary rounded p-3 text-xs font-mono text-amber-200/90 focus:outline-none mb-3"></textarea>
+
+            <div id="state-modal-status" class="text-xs text-emerald-400 font-display-sys uppercase tracking-wider mb-3 hidden"></div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <button onclick="copyStateJson()" class="px-3.5 py-2 bg-sys-primary hover:brightness-110 text-white font-display-sys text-xs uppercase rounded border border-sys-secondary flex items-center gap-1.5">
+                        <i class="fa-solid fa-copy"></i> Kopiuj JSON
+                    </button>
+                    <button onclick="importStateJson()" class="px-3.5 py-2 bg-stone-800 hover:bg-stone-700 text-stone-100 font-display-sys text-xs uppercase rounded border border-sys-secondary flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-import"></i> Wczytaj z pola
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="resetToDefaults()" class="px-3 py-2 bg-red-950/60 hover:bg-red-900/80 text-red-200 font-display-sys text-xs uppercase rounded border border-red-800/60" title="Przywróć domyślne ustawienia">
+                        Resetuj
+                    </button>
+                    <button onclick="closeStateModal()" class="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 font-display-sys text-xs uppercase rounded border border-sys-secondary">
+                        Zamknij
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Ukryty input do wgrywania portretu pojedynczego tokenu -->
     <input type="file" id="token-avatar-input" accept="image/*" class="hidden" onchange="handleTokenAvatarUpload(event)">
 
     <script>
         /* ==========================================================================
-           DANE I KONFIGURACJA OBU SYSTEMÓW: WAMPIR (V5) ORAZ ŁOWCA (H5)
+           DANE I KONFIGURACJA OBU SYSTEMÓW: WAMPIR (V5) ORAZ ŁOWCA (H5) - DO 10 GRACZY
            ========================================================================== */
+        const MAX_SLOTS = 10;
+
         const BG_PRESETS = {
             vampire: [
                 "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=85",
@@ -632,6 +687,7 @@
         const DEFAULT_STATE = {
             activeSystem: 'vampire', // 'vampire' lub 'hunter'
             tokenMode: 'foundry',    // 'foundry' (puste gniazda) lub 'portrait' (portrety)
+            dockLayout: 'auto',      // 'auto' (1 kolumna dla 1-5, 2 kolumny dla 6-10), '1col', '2col'
             widgetsVisible: true,
             systems: {
                 vampire: {
@@ -681,7 +737,34 @@
             }
         };
 
-        let appState = JSON.parse(localStorage.getItem('wod_dual_foundry_v2')) || DEFAULT_STATE;
+        const VAMPIRE_ARCHETYPES = [
+            { name: "Dante Alighieri", sub: "Tremere • Regent" },
+            { name: "Helena Vane", sub: "Hecata • Nekromantka" },
+            { name: "Marcus „Żelazo”", sub: "Brujah • Anarchista" },
+            { name: "Nadia Al-Mansoor", sub: "Banu Haqim • Sędzia" },
+            { name: "Ezra Thorne", sub: "Nosferatu • Informator" },
+            { name: "Camilla Laurent", sub: "Ministry • Kusicielka" },
+            { name: "Viktor Drago", sub: "Tzimisce • Koldun" },
+            { name: "Soren Lind", sub: "Ravnos • Wędrowiec" },
+            { name: "Klara Weiss", sub: "Salubri • Uzdrowicielka" },
+            { name: "Roman Kruk", sub: "Caitiff • Bezklanowiec" }
+        ];
+
+        const HUNTER_ARCHETYPES = [
+            { name: "Kapitan Janusz Wilk", sub: "Kredo Bojowe • Taktyk" },
+            { name: "Alicja „Sowa” Maj", sub: "Kredo Dociekliwe • Hakerka" },
+            { name: "Brat Mateusz", sub: "Kredo Wiernych • Egzorcysta" },
+            { name: "Damian „Dym” Król", sub: "Kredo Podziemne • Pirotechnik" },
+            { name: "Karolina Berg", sub: "Kredo Przedsiębiorcze • Medyk" },
+            { name: "Tomasz „Cień” Lis", sub: "Kredo Bojowe • Snajper" },
+            { name: "Ewa Konieczna", sub: "Kredo Dociekliwe • Dziennikarka" },
+            { name: "Wiktor Szulc", sub: "Kredo Podziemne • Przemytnik" },
+            { name: "Helena Grot", sub: "Kredo Wiernych • Strażniczka" },
+            { name: "Piotr „Borsuk” Rak", sub: "Kredo Przedsiębiorcze • Inżynier" }
+        ];
+
+        let appState = JSON.parse(localStorage.getItem('wod_dual_foundry_v2')) || JSON.parse(JSON.stringify(DEFAULT_STATE));
+        if (!appState.dockLayout) appState.dockLayout = 'auto';
         let activeAvatarSlotIndex = null;
 
         function saveState() {
@@ -869,7 +952,7 @@
         }
 
         /* ==========================================================================
-           PRAWY PASEK NA TOKENY POSTACI GRACZY (FOUNDRY VTT DOCK)
+           PRAWY PASEK NA TOKENY POSTACI GRACZY (1-10 SLOTÓW, ADAPTACYJNY UKŁAD 1/2 KOLUMNY)
            ========================================================================== */
         function setTokenMode(mode) {
             appState.tokenMode = mode;
@@ -891,21 +974,61 @@
             }
         }
 
+        function isTwoColumnDock() {
+            const count = getCurrentSysData().players.length;
+            if (appState.dockLayout === '2col') return true;
+            if (appState.dockLayout === '1col') return false;
+            return count >= 6; // Automatycznie 2 kolumny dla 6-10 graczy
+        }
+
+        function cycleDockLayoutMode() {
+            const modes = ['auto', '2col', '1col'];
+            const idx = modes.indexOf(appState.dockLayout || 'auto');
+            appState.dockLayout = modes[(idx + 1) % modes.length];
+            renderTokenSlots();
+            saveState();
+        }
+
         function renderTokenSlots() {
             const sys = appState.activeSystem;
             const sysData = getCurrentSysData();
             const cfg = SYSTEM_CONFIG[sys];
+            const dockPanel = document.getElementById('token-dock-panel');
             const container = document.getElementById('token-slots-container');
             const badge = document.getElementById('slot-count-badge');
-            container.innerHTML = '';
-            badge.innerText = sysData.players.length;
+            const layoutLabel = document.getElementById('dock-layout-label');
 
+            container.innerHTML = '';
             const count = sysData.players.length;
-            const ringSizeClass = count <= 4 ? 'w-20 h-20' : (count === 5 ? 'w-16 h-16' : 'w-14 h-14');
+            badge.innerText = count;
+
+            const twoCol = isTwoColumnDock();
+            if (layoutLabel) {
+                layoutLabel.innerText = appState.dockLayout === 'auto'
+                    ? `Auto (${twoCol ? '2 kol.' : '1 kol.'})`
+                    : (appState.dockLayout === '2col' ? '2 Kolumny' : '1 Kolumna');
+            }
+
+            // Dopasowanie szerokości paska i siatki tak, aby wszystkie 1-10 tokenów mieściły się bez paska przewijania
+            if (twoCol) {
+                dockPanel.className = "wod-panel h-full max-h-[85vh] w-[460px] md:w-[540px] rounded-lg p-3.5 flex flex-col justify-between border-l-2 border-l-[var(--accent-secondary)] relative transition-all duration-300";
+                container.className = "flex-1 py-1.5 px-1 grid grid-cols-2 content-around gap-x-3 gap-y-2 overflow-hidden";
+            } else {
+                dockPanel.className = "wod-panel h-full max-h-[85vh] w-80 md:w-[360px] rounded-lg p-3.5 flex flex-col justify-between border-l-2 border-l-[var(--accent-secondary)] relative transition-all duration-300";
+                container.className = "flex-1 py-2 px-1 grid grid-cols-1 content-around gap-2 overflow-hidden";
+            }
+
+            // Rozmiar pierścienia na token zależny od liczby graczy i układu (gwarantuje wygodne upuszczanie tokenów w Foundry VTT)
+            let ringSizeClass = 'w-16 h-16';
+            if (twoCol) {
+                ringSizeClass = count <= 6 ? 'w-16 h-16' : (count <= 8 ? 'w-14 h-14' : 'w-[54px] h-[54px]');
+            } else {
+                ringSizeClass = count <= 4 ? 'w-20 h-20' : (count === 5 ? 'w-16 h-16' : 'w-11 h-11');
+            }
 
             sysData.players.forEach((player, idx) => {
                 const slot = document.createElement('div');
-                slot.className = "token-slot flex items-center gap-3.5 group px-1.5 py-1 rounded hover:bg-white/[0.03] transition-colors";
+                slot.className = `token-slot flex items-center ${twoCol ? 'gap-2.5 p-1' : 'gap-3.5 px-1.5 py-1'} rounded bg-black/25 hover:bg-white/[0.04] border border-white/[0.04] transition-colors`;
 
                 // 1. Zawartość okrągłego gniazda na token
                 let ringInner = '';
@@ -913,9 +1036,9 @@
                     // Tryb pustego gniazda pod fizyczne tokeny w Foundry VTT
                     ringInner = `
                         <div class="w-full h-full rounded-full foundry-socket-grid flex items-center justify-center relative overflow-hidden">
-                            <div class="w-3.5 h-[1px] bg-[var(--accent-secondary)] opacity-35 absolute"></div>
-                            <div class="h-3.5 w-[1px] bg-[var(--accent-secondary)] opacity-35 absolute"></div>
-                            <span class="font-display-sys text-[10px] text-sys-secondary opacity-40 uppercase tracking-widest select-none">
+                            <div class="w-3.5 h-[1px] bg-[var(--accent-secondary)] opacity-40 absolute"></div>
+                            <div class="h-3.5 w-[1px] bg-[var(--accent-secondary)] opacity-40 absolute"></div>
+                            <span class="font-display-sys text-[10px] text-sys-secondary opacity-45 uppercase tracking-widest select-none">
                                 ${idx + 1}
                             </span>
                         </div>
@@ -943,7 +1066,7 @@
                     pipsHtml += `
                         <button onclick="togglePlayerPip(${idx}, ${p})" 
                                 title="${cfg.pipTooltip}: ${p}/5"
-                                class="text-[11px] transition-transform hover:scale-125 ${isFilled ? 'text-sys-accent' : 'text-stone-600 hover:text-stone-400'}">
+                                class="${twoCol ? 'text-[10px]' : 'text-[11px]'} transition-transform hover:scale-125 ${isFilled ? 'text-sys-accent' : 'text-stone-600 hover:text-stone-400'}">
                             <i class="fa-solid ${cfg.pipIcon}"></i>
                         </button>
                     `;
@@ -960,26 +1083,26 @@
                         <div class="flex items-center justify-between gap-1">
                             <div contenteditable="true" spellcheck="false"
                                  oninput="updatePlayerField(${idx}, 'name', this.innerText)"
-                                 class="font-display-sys font-bold text-sm text-stone-100 tracking-wide truncate px-1 focus:whitespace-normal"
+                                 class="font-display-sys font-bold ${twoCol ? 'text-xs' : 'text-sm'} text-stone-100 tracking-wide truncate px-1 focus:whitespace-normal"
                                  title="Kliknij, aby wpisać imię postaci">
                                 ${player.name}
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between gap-2 mt-0.5 px-1">
+                        <div class="flex items-center justify-between gap-1.5 mt-0.5 px-1">
                             <div contenteditable="true" spellcheck="false"
                                  oninput="updatePlayerField(${idx}, 'sub', this.innerText)"
-                                 class="font-lore-sys italic text-xs md:text-sm text-sys-secondary truncate"
+                                 class="font-lore-sys italic ${twoCol ? 'text-[11px]' : 'text-xs md:text-sm'} text-sys-secondary truncate"
                                  title="Kliknij, aby wpisać Klan (Wampir) lub Kredo i Impuls (Łowca)">
                                 ${player.sub}
                             </div>
                             <!-- Klikalny 5-pipowy wskaźnik Głodu / Desperacji -->
-                            <div class="flex items-center gap-1 shrink-0" title="Kliknij, aby zmienić ${cfg.pipTooltip}">
+                            <div class="flex items-center gap-0.5 shrink-0" title="Kliknij, aby zmienić ${cfg.pipTooltip}">
                                 ${pipsHtml}
                             </div>
                         </div>
 
-                        <div class="h-[1px] w-full bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary-dim)] to-transparent mt-1.5"></div>
+                        <div class="h-[1px] w-full bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary-dim)] to-transparent mt-1"></div>
                     </div>
                 `;
 
@@ -1024,11 +1147,14 @@
 
         function addTokenSlot() {
             const sysData = getCurrentSysData();
-            if (sysData.players.length >= 7) return;
+            if (sysData.players.length >= MAX_SLOTS) return;
             const isVamp = appState.activeSystem === 'vampire';
+            const pool = isVamp ? VAMPIRE_ARCHETYPES : HUNTER_ARCHETYPES;
+            const preset = pool[sysData.players.length % pool.length];
+
             sysData.players.push({
-                name: isVamp ? `Spokrewniony #${sysData.players.length + 1}` : `Łowca #${sysData.players.length + 1}`,
-                sub: isVamp ? "Klan Nieznany" : "Kredo Bojowe",
+                name: preset.name,
+                sub: preset.sub,
                 pips: 1,
                 avatar: ""
             });
@@ -1042,6 +1168,68 @@
             sysData.players.pop();
             renderTokenSlots();
             saveState();
+        }
+
+        /* ==========================================================================
+           MODAL STANU JSON (KOPIOWANIE / WCZYTYWANIE KONFIGURACJI POD GITHUB PAGES)
+           ========================================================================== */
+        function openStateModal() {
+            const modal = document.getElementById('state-modal');
+            const textarea = document.getElementById('state-json-textarea');
+            const status = document.getElementById('state-modal-status');
+            textarea.value = JSON.stringify(appState, null, 2);
+            status.classList.add('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeStateModal() {
+            const modal = document.getElementById('state-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function showStateModalMessage(msg, isError = false) {
+            const status = document.getElementById('state-modal-status');
+            status.innerText = msg;
+            status.className = `text-xs font-display-sys uppercase tracking-wider mb-3 ${isError ? 'text-red-400' : 'text-emerald-400'}`;
+            status.classList.remove('hidden');
+        }
+
+        function copyStateJson() {
+            const textarea = document.getElementById('state-json-textarea');
+            textarea.select();
+            document.execCommand('copy');
+            showStateModalMessage('Skopiowano konfigurację JSON do schowka!');
+        }
+
+        function importStateJson() {
+            const textarea = document.getElementById('state-json-textarea');
+            try {
+                const parsed = JSON.parse(textarea.value);
+                if (!parsed || !parsed.systems || !parsed.systems.vampire || !parsed.systems.hunter) {
+                    throw new Error('Nieprawidłowa struktura JSON.');
+                }
+                appState = parsed;
+                if (!appState.dockLayout) appState.dockLayout = 'auto';
+                saveState();
+                applySystemUI();
+                updateTokenModeButtons();
+                updateWidgetsVisibility();
+                showStateModalMessage('Pomyślnie wczytano konfigurację!');
+            } catch (e) {
+                showStateModalMessage('Błąd formatu JSON – sprawdź składnię.', true);
+            }
+        }
+
+        function resetToDefaults() {
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            saveState();
+            applySystemUI();
+            updateTokenModeButtons();
+            updateWidgetsVisibility();
+            document.getElementById('state-json-textarea').value = JSON.stringify(appState, null, 2);
+            showStateModalMessage('Przywrócono domyślne ustawienia.');
         }
 
         /* ==========================================================================
